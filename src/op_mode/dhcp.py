@@ -111,13 +111,13 @@ def _get_raw_server_leases(family='inet', pool=None, sorted=None, state=[], orig
         data_lease['pool'] = kea_get_pool_from_subnet_id(active_config, inet_suffix, lease['subnet-id']) if active_config else '-'
         data_lease['end'] = lease['expire_timestamp'].timestamp() if lease['expire_timestamp'] else None
         data_lease['origin'] = 'local' # TODO: Determine remote in HA
-        data_lease['hostname'] = lease.get('hostname', '-')
+        data_lease['mac'] = lease.get('hw-address', '')
+        data_lease['hostname'] = lease.get('hostname', '')
         # remove trailing dot to ensure consistency for `vyos-hostsd-client`
         if data_lease['hostname'][-1] == '.':
             data_lease['hostname'] = data_lease['hostname'][:-1]
 
         if family == 'inet':
-            data_lease['mac'] = lease['hw-address']
             data_lease['start'] = lease['start_timestamp'].timestamp()
 
         if family == 'inet6':
@@ -186,6 +186,7 @@ def _get_formatted_server_leases(raw_data, family='inet'):
     if family == 'inet6':
         for lease in raw_data:
             ipaddr = lease.get('ip')
+            hw_addr = lease.get('mac')
             state = lease.get('state')
             start = lease.get('last_communication')
             start =  _utc_to_local(start).strftime('%Y/%m/%d %H:%M:%S')
@@ -194,11 +195,12 @@ def _get_formatted_server_leases(raw_data, family='inet'):
             remain = lease.get('remaining')
             lease_type = lease.get('type')
             pool = lease.get('pool')
+            hostname = lease.get('hostname')
             host_identifier = lease.get('duid')
-            data_entries.append([ipaddr, state, start, end, remain, lease_type, pool, host_identifier])
+            data_entries.append([ipaddr, hw_addr, state, start, end, remain, pool, hostname, lease_type, host_identifier])
 
-        headers = ['IPv6 address', 'State', 'Last communication', 'Lease expiration', 'Remaining', 'Type', 'Pool',
-                   'DUID']
+        headers = ['IPv6 address', 'MAC address', 'State', 'Last communication', 'Lease expiration', 'Remaining', 'Pool',
+                   'Hostname', 'Type', 'DUID']
 
     output = tabulate(data_entries, headers, numalign='left')
     return output
