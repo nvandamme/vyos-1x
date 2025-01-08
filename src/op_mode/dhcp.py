@@ -114,7 +114,7 @@ def _get_raw_server_leases(family='inet', pool=None, sorted=None, state=[], orig
         data_lease['mac'] = lease.get('hw-address', '')
         data_lease['hostname'] = lease.get('hostname', '')
         # remove trailing dot to ensure consistency for `vyos-hostsd-client`
-        if data_lease['hostname'][-1] == '.':
+        if len(data_lease['hostname']) > 0 and data_lease['hostname'][-1] == '.':
             data_lease['hostname'] = data_lease['hostname'][:-1]
 
         if family == 'inet':
